@@ -39,6 +39,10 @@ def parse_ffld(ffld_contents):
         else:
             if current_section is not None:
                 sections[current_section] += line + '\n'
+    
+    # Check if the 'improper Torsion' section is present
+    if 'improper' not in sections:
+        sections['improper'] = ''
     return sections
 
 ## Read and parse 
@@ -132,8 +136,8 @@ def transform_stretch_section(stretch_section):
     lines = stretch_section.strip().split("\n")[1:]
     for i, line in enumerate(lines):
         parts = line.split()
-        atom1 = int(parts[0][-1:])
-        atom2 = int(parts[1][-1:])
+        atom1 = int(''.join(filter(str.isdigit, parts[0])))
+        atom2 = int(''.join(filter(str.isdigit, parts[1])))
         k = parts[2]
         r0 = parts[3]
         new_line = f"{atom1:6d} {atom2:6d} {k:12s} {r0:12s}"
@@ -185,9 +189,9 @@ def transform_bending_section(angles_section):
     for line in lines:
         # Extract the atom indices and equilibrium angle from the line
         parts = line.split()
-        atom1 = int(parts[0][-1:])
-        atom2 = int(parts[1][-1:])
-        atom3 = int(parts[2][-1:])
+        atom1 = int(''.join(filter(str.isdigit, parts[0])))
+        atom2 = int(''.join(filter(str.isdigit, parts[1])))
+        atom3 = int(''.join(filter(str.isdigit, parts[2])))
         k = parts[3]
         theta0 = parts[4]
 
@@ -241,10 +245,10 @@ def transform_torsion_section(torsion_section):
     for line in lines:
         # Extract the atom indices from the line
         parts = line.split()
-        atom1 = int(parts[0][-1:])
-        atom2 = int(parts[1][-1:])
-        atom3 = int(parts[2][-1:])
-        atom4 = int(parts[3][-1:])
+        atom1 = int(''.join(filter(str.isdigit, parts[0])))
+        atom2 = int(''.join(filter(str.isdigit, parts[1])))
+        atom3 = int(''.join(filter(str.isdigit, parts[2])))
+        atom4 = int(''.join(filter(str.isdigit, parts[3])))
         # Extract constants
         c1 = float(parts[4])
         c2 = float(parts[5])
@@ -303,10 +307,10 @@ def transform_improper_torsion_section(improper_torsion_section):
     for line in lines:
         # Extract the atom indices and constants from the line
         parts = line.split()
-        atom1 = int(parts[0][-1:])
-        atom2 = int(parts[1][-1:])
-        atom3 = int(parts[2][-1:])
-        atom4 = int(parts[3][-1:])
+        atom1 = int(''.join(filter(str.isdigit, parts[0])))
+        atom2 = int(''.join(filter(str.isdigit, parts[1])))
+        atom3 = int(''.join(filter(str.isdigit, parts[2])))
+        atom4 = int(''.join(filter(str.isdigit, parts[3])))
         constant = float(parts[4])
         # Format the new line
         new_line = f"{atom1:6d} {atom2:6d} {atom3:6d} {atom4:6d} {constant:.3f}"
