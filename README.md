@@ -9,7 +9,7 @@ Second, convert your `.mae` geometry to `.pdb` with the following command in ter
 ``` 
 $SCHRODINGER/utilities/pdbconvert -no_reorder -imae **.mae -opdb **.pdb
 ``` 
-Open the generated `.pdb` file and delete the `CONNECT` 
+Open the generated `.pdb` file and delete the `CONNECT` lines. (this step is not mandatory but it can avoid errors)
 
 Third, generate the `.ffld` topology using the following command:
 ```
