@@ -1,6 +1,22 @@
 # ffld2gmx
 Python Script to transform Force Field files from Schrödinger's Maestro (.ffld) to GROMACS (.itp, .top)
 
+### How to get your FFLD in Maestro
+
+First, build your geometry in maestro and save the geometry as a `.mae` file
+
+Second, convert your `.mae` geometry to `.pdb` with the following command in terminal:
+``` 
+$SCHRODINGER/utilities/pdbconvert -no_reorder -imae **.mae -opdb **.pdb
+``` 
+Open the generated `.pdb` file and delete the `CONNECT` 
+
+Third, generate the `.ffld` topology using the following command:
+```
+$SCHRODINGER/utilities/ffld_server -version 14 -print_parameters -ipdb **.pdb > **.ffld
+```
+Once you have your `topology.ffld` topology file, the next step is to use the transformer.
+
 ### Usage
 
 To use this script one just need to have the `ffld2gmx.py` script in the same directory as your `topology.ffld`. The `.ffld` file will be used as argument for the script:
