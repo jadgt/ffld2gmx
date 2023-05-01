@@ -7,6 +7,7 @@ To use this script one just need to have the `ffld2gmx.py` script in the same di
 ```
 python ffld2gmx.py topology.ffld
 ```
+**Important:** The script also requires to have the file `ffnotbonded.itp` file in the same directory so it can read the non-bonded parameters from the OPLS-AA force field tailored to GROMACS.
 
 The output of the script are two files:
 1. A residue topology file called `UNK.itp` so one can change the name to the residue name desired.
@@ -20,4 +21,3 @@ To start checking the usage one can use the `test.ffld` file included in this re
 
 - The automatic force field generated is a OPLS-AA force field. For other force fields one need to use other tools to transform those.
 - Transition metals force constants are not reliable and needs to be computed independently.
-- At this moment I am working on improvements, right now the masses of the atoms needs to be manually added. Future fixes will be available soon.

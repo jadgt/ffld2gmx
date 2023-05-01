@@ -4,6 +4,8 @@
 import sys
 import os
 
+itp_file = 'ffnotbonded.itp'
+
 if len(sys.argv) != 2:
     print(f"Usage: {sys.argv[0]} input_file.ffld")
     sys.exit(1)
@@ -54,80 +56,108 @@ sections = parse_ffld(contents)
 
 atoms = sections['atoms']
 
-def transform_atoms_section(atoms_section):
+def transform_atoms_section(atoms_section, itp_file):
+    # Read the atomtype information from the itp file
+    atomtype_info = {}
+    with open(itp_file, 'r') as f:
+        for line in f:
+            if line.startswith(' opls_'):
+                parts = line.strip().split()
+                atomtype_number = int(''.join(filter(str.isdigit, parts[0])))  # Extract the number from the atomtype name
+                atomtype_info[atomtype_number] = {
+                    'mass': float(parts[3]),
+                    'charge': float(parts[4]),
+                    'sigma': float(parts[6]),
+                    'epsilon': float(parts[7])
+                }
+
     new_lines = []
     lines = atoms_section.strip().split("\n")[2:-1]
     for i, line in enumerate(lines):
-        # Print the line to check if it matches the expected format
-        #print(f"Processing line {i}: {line}")
-        
         parts = line.split()
-        atom = parts[0]
-        charge = parts[4]
-        sigma = parts[5]
-        epsilon = parts[6]
-        new_line = f"{i+1}  {atom}   {charge}   {sigma}   {epsilon}"
+        atom = f"op_unk.{parts[0]}"
+        atomtype = int(parts[1])
+        if atomtype in atomtype_info:
+            atomtype_data = atomtype_info[atomtype]
+            mass = atomtype_data['mass']
+            charge = atomtype_data['charge']
+            sigma = atomtype_data['sigma']
+            epsilon = atomtype_data['epsilon']
+        else:
+            mass = 0  # Define mass manually
+            charge = float(parts[4])
+            sigma = float(parts[5]) / 10  # Convert sigma from Angstroms to nanometers
+            epsilon = float(parts[6]) * 4.18  # Convert epsilon from kcal/mol to kJ/mol
+        new_line = f"   {atom:<10s} {atom:<10s} {mass:>11.6f} {charge:>11.3f}   A   {sigma:>14.6e} {epsilon:>14.6e}"
         new_lines.append(new_line)
     return "\n".join(new_lines)
 
-new_atoms = transform_atoms_section(atoms)
-
-#Tidy ffld will be parsed and transformed to itp
-
-def generate_atomtypes_section(atoms_section):
-    # Initialize an empty list to store the atomtype lines
-    atomtype_lines = []
-
-    # Add the section header and column headers to the list
-    atomtype_lines.append("[ atomtypes ]")
-    atomtype_lines.append("; name mass charge ptype sigma(nm) epsilon (kJ/mol)")
-
+def generate_atomtypes_section(atoms_section, itp_file):
     # Transform the atoms section and iterate over each line
-    for i, line in enumerate(atoms_section.strip().split('\n')[0:]):
-        parts = line.split()
-        atom = parts[1]
-        charge = parts[2]
-        sigma = parts[3]
-        epsilon = parts[4]
-        mass = 0  # Replace this with a function that returns the mass of the atom
-        sigma = float(sigma) / 10.0
-        epsilon = float(epsilon) * 4.18 * 2  # Convert from kcal/mol to kJ/mol
-        new_line = f"{i+1}  op_unk.{atom}   {mass:.6f}   {charge}   A      {sigma:.6e}    {epsilon:.6e}"
-        atomtype_lines.append(new_line)
+    atomtype_lines= transform_atoms_section(atoms_section, itp_file).split('\n')
 
-    # Join the atomtype lines into a single string with newline characters between each line
+    # Add the section header and column headers to the list for [ atomtypes ]
+    atomtype_lines.insert(0, "[ atomtypes ]")
+    atomtype_lines.insert(1, "; name mass charge ptype sigma(nm) epsilon (kJ/mol)")
+
+    # Join the [ atomtypes ] lines into a single string with newline characters between each line
     atomtypes_section = "\n".join(atomtype_lines)
 
     # Return the atomtypes section string
     return atomtypes_section
 
-atomtypes = generate_atomtypes_section(new_atoms)
+atomtypes_section = generate_atomtypes_section(atoms, itp_file)
 
 ## Generate atom section
 
-def generate_atoms_section(new_atoms):
-    # Initialize an empty list to store the new lines
-    new_lines = []
-    
-    # Add the section header and column headers to the new lines list
-    new_lines.append("[ atoms ]")
-    new_lines.append("; nr type  resnr residue  atom  cgnr charge  mass")
-    
-    # Transform the new_atoms string and iterate over each line
-    for i, line in enumerate(new_atoms.strip().split("\n")):
-        atom_nr, atom_type, charge, *_ = line.split()
-        res_nr = 1
-        residue = "UNK"
-        atom = atom_type[0]
-        cgnr = 1
-        mass = 0  # Replace this with a function that returns the mass of the atom
-        new_line = f"{int(atom_nr):6d}   op_unk.{atom_type:6s} {res_nr:5d} {residue:8s} {atom:6s} {cgnr:6d} {charge:9s} {mass:10.6f}"
-        new_lines.append(new_line)
+def transform_atoms_section2(atoms_section, itp_file):
+    # Read the atomtype information from the itp file
+    atomtype_info = {}
+    with open(itp_file, 'r') as f:
+        for line in f:
+            if line.startswith(' opls_'):
+                parts = line.strip().split()
+                atomtype_number = int(''.join(filter(str.isdigit, parts[0])))  # Extract the number from the atomtype name
+                atomtype_info[atomtype_number] = {
+                    'mass': float(parts[3]),
+                    'charge': float(parts[4]),
+                    'sigma': float(parts[6]),
+                    'epsilon': float(parts[7])
+                }
 
-    # Join the new lines with newlines and return the result
+    new_lines = []
+    lines = atoms_section.strip().split("\n")[2:-1]
+    for i, line in enumerate(lines):
+        parts = line.split()
+        atom = f"op_unk.{parts[0]}"
+        atomtype = int(parts[1])
+        if atomtype in atomtype_info:
+            atomtype_data = atomtype_info[atomtype]
+            mass = atomtype_data['mass']
+            charge = atomtype_data['charge']
+        else:
+            mass = 0  # Define mass manually
+            charge = float(parts[4])
+        new_line = "    {:3d}   {:<10s}{:>5d} {:<5s} {:<6s} {:>3d}  {:>10.6f}  {:>11.6f}".format(i+1, atom, 1, "UNK", parts[0], 1, float(charge), float(mass))
+        new_lines.append(new_line)
     return "\n".join(new_lines)
-        
-atomssection = generate_atoms_section(new_atoms)
+
+ 
+def generate_atoms_section(atoms_section, itp_file):
+    # Transform the atoms section and iterate over each line
+    atom_lines= transform_atoms_section2(atoms_section, itp_file).split('\n')
+
+    # Add the section header and column headers to the list for [ atomtypes ]
+    atom_lines.insert(0, "[ atoms ]")
+    atom_lines.insert(1, "; nr type  resnr residue  atom  cgnr charge  mass")
+
+    # Join the [ atomtypes ] lines into a single string with newline characters between each line
+    atoms_section = "\n".join(atom_lines)
+
+    # Return the atomtypes section string
+    return atoms_section
+
+atoms_section = generate_atoms_section(atoms, itp_file)
 
 ## Generate bond section
 # Tidy ffld
@@ -325,6 +355,10 @@ improper_section = transform_improper_torsion_section(improper)
 ## Generate the improper [ dihedrals ] section:
 
 def generate_improper_dihedrals_section(improper_torsion_section):
+    # Check if the improper torsion section is empty
+    if not improper_torsion_section:
+        return ""
+
     # Transform the improper torsion section into a list of lines
     lines = improper_torsion_section.strip().split("\n")
 
@@ -357,9 +391,10 @@ imp_dihedrals_section = generate_improper_dihedrals_section(improper_section)
 
 ## Print out the .itp file 
 
-def generate_itp_file(atomtypes, atoms_section, bonds_section, angles_section, dihedrals_section, imp_dihedrals_section):
+def generate_itp_file(atoms_section, bonds_section, angles_section, dihedrals_section, imp_dihedrals_section):
     # Construct the ITP file string
     itp_file = f""";Generated by ffld2gmx.py
+;Residue topology file 
 ;Created by Juan de Gracia
 
 
@@ -379,18 +414,17 @@ UNK 3
 """
 
     # Write the ITP file to disk
-    with open("UNK_new.itp", "w") as f:
+    with open("UNK.itp", "w") as f:
         f.write(itp_file)
 
-generate_itp_file(atomtypes, atomssection, bonds_section, angles_section, dihedrals_section, imp_dihedrals_section)
+generate_itp_file(atoms_section, bonds_section, angles_section, dihedrals_section, imp_dihedrals_section)
 
 #Print out the topol.top file
 
 def generate_topol_file(atomtypes):
     # Construct the topol.top file string
-    topol_file = f"""
-
-;Generated by ffld2gmx.py
+    topol_file = f""";Generated by ffld2gmx.py
+;General topology file using the OPLS-AA force field
 ;Created by Juan de Gracia    
 
 #include "oplsaa.ff/forcefield.itp"
@@ -413,7 +447,7 @@ UNK               1
     with open("topol.top", "w") as f:
         f.write(topol_file)
 
-generate_topol_file(atomtypes)
+generate_topol_file(atomtypes_section)
 
 
 
