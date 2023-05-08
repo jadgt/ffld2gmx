@@ -431,7 +431,7 @@ def generate_topol_file(atomtypes):
 
 {atomtypes}
 
-:Include the residue topology
+;Include the residue topology
 #include "UNK.itp"
 
 [ system ]
