@@ -226,7 +226,7 @@ def transform_bending_section(angles_section):
         theta0 = parts[4]
 
         # Format the new line
-        new_line = f"{atom2:6d} {atom1:6d} {atom3:6d} {k:12s} {theta0:12s}"
+        new_line = f"{atom1:6d} {atom2:6d} {atom3:6d} {k:12s} {theta0:12s}"
         # Append the new line to the list of new lines
         new_lines.append(new_line)
 
