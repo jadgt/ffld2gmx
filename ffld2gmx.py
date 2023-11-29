@@ -293,10 +293,16 @@ def transform_torsion_section(torsion_section):
     return "\n".join(new_lines)
 
 torsion_section = transform_torsion_section(torsion)
+print(type(torsion_section), torsion_section)
 
 #Create the [ dihedrals ] section
 
 def generate_dihedrals_section(torsion_section):
+    # Check if the torsion_section is empty
+    if not torsion_section.strip():
+        # Return a default value or an empty string
+        return "[ dihedrals ]\n; Type 5 Fourier\n;  ai    aj    ak    al  type     coefficients\n"
+
     # Initialize an empty list to store the dihedral lines
     dihedral_lines = []
 
@@ -304,14 +310,18 @@ def generate_dihedrals_section(torsion_section):
     for line in torsion_section.strip().split("\n"):
         # Extract the atom indices and Fourier coefficients from the line
         parts = line.split()
+        if len(parts) < 8:
+            # Skip this line if it does not have enough parts
+            continue
+
         i = int(parts[0]) - 1  # Subtract 1 to convert from 1-indexed to 0-indexed
         j = int(parts[1]) - 1
         k = int(parts[2]) - 1
         l = int(parts[3]) - 1
-        c1 = float(parts[4])  * 4.184
-        c2 = float(parts[5])  * 4.184
-        c3 = float(parts[6])  * 4.184
-        c4 = float(parts[7])  * 4.184
+        c1 = float(parts[4]) * 4.184
+        c2 = float(parts[5]) * 4.184
+        c3 = float(parts[6]) * 4.184
+        c4 = float(parts[7]) * 4.184
 
         # Format the dihedral line and append it to the list
         dihedral_line = f"{i+1:6d} {j+1:6d} {k+1:6d} {l+1:6d} 5 {c1:.6f} {c2:.6f} {c3:.6f} {c4:.6f}"
@@ -322,6 +332,7 @@ def generate_dihedrals_section(torsion_section):
 
     # Return the dihedrals section string
     return dihedrals_section
+
 
 dihedrals_section = generate_dihedrals_section(torsion_section)
 
